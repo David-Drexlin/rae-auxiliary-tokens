@@ -12,5 +12,4 @@ The following materials are not included and must be obtained separately under t
 - FD-DINOv2 evaluation scripts.
 - Slurm, CUDA, PyTorch, torchvision, timm, transformers, and other runtime dependencies.
 
-For a double-blind NeurIPS submission, local machine paths in copied configs/scripts were sanitized to placeholders such as `RAE_ROOT_PLACEHOLDER`, `DATASETS_ROOT_PLACEHOLDER`, and `HOME_PLACEHOLDER`. Replace these placeholders locally before execution.
 
