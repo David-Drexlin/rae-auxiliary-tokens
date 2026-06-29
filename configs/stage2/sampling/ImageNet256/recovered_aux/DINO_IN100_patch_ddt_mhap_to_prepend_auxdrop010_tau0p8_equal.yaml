@@ -1,0 +1,28 @@
+stage2:
+  config: "RAE_ROOT_PLACEHOLDER/configs/stage2/training/ImageNet256/long80/DiTDH-S_DINO_IN100_patch_80ep.yaml"
+  ckpt: "RAE_ROOT_PLACEHOLDER/ckpts/stage2_best80/in100_s2_dino_patch80_ddt/checkpoints/ep-last.pt"
+  use_ema: true
+
+predictor:
+  config: "RAE_ROOT_PLACEHOLDER/assets/analysis/dino_patch_to_dino_regcls_in100/runs/mhap/config.yaml"
+  ckpt: "RAE_ROOT_PLACEHOLDER/assets/analysis/dino_patch_to_dino_regcls_in100/runs/mhap/checkpoints/best.pt"
+  model: "mhap"
+
+target_stage1:
+  config_path: "RAE_ROOT_PLACEHOLDER/ckpts/DINO_IN100_AUXDROP_DINO_decB_Patch+Register+CLS_prepend_auxdrop0p10_tau0p8_seed0/config.yaml"
+  decoder_ckpt: "auto"
+
+output:
+  sample_dir: "RAE_ROOT_PLACEHOLDER/samples_stage2_recovered_aux"
+  save_folder: "in100_s2_dino_patch80_ddt_mhap_to_prepend_auxdrop010_tau0p8_equal_cfg1"
+  pack_npz: false
+
+run:
+  num_samples: 50000
+  per_proc_batch_size: 64
+  precision: "bf16"
+  tf32: true
+  global_seed: 42
+
+conditioning:
+  mode: "equal_class"

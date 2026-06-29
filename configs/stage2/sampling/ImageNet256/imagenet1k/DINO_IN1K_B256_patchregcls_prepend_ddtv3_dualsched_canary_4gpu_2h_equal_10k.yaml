@@ -1,0 +1,36 @@
+stage2:
+  config: "RAE_ROOT_PLACEHOLDER/ckpts/stage2_imagenet1k_ddtv3_canary_4gpu_2h/in1k_s2_dino_patchregcls_ddtv3_dualsched_canary_4gpu_2h/config.yaml"
+  ckpt: "RAE_ROOT_PLACEHOLDER/ckpts/stage2_imagenet1k_ddtv3_canary_4gpu_2h/in1k_s2_dino_patchregcls_ddtv3_dualsched_canary_4gpu_2h/checkpoints/ep-last.pt"
+  use_ema: true
+
+decode:
+  use_aux_for_decode: true
+
+output:
+  sample_dir: "RAE_ROOT_PLACEHOLDER/samples_stage2_imagenet1k_ddtv3_canary_4gpu_2h"
+  save_folder: "in1k_s2_dino_patchregcls_ddtv3_dualsched_canary_4gpu_2h_equal_10k_cfg1"
+  pack_npz: false
+  save_latent_shards: true
+  latent_shard_dir: "latent_shards"
+
+run:
+  num_samples: 10000
+  per_proc_batch_size: 64
+  precision: "bf16"
+  tf32: true
+  global_seed: 43
+
+conditioning:
+  mode: "equal_class"
+  csv_path: null
+  image_root: null
+  count_level: "image"
+  id_field: "label"
+  label_field: "label"
+  slide_sep: "__"
+  y_vocab_json: null
+  meta_vocabs_json: null
+  skip_unk_y: false
+  drop_meta_unk: false
+  skip_unk_meta: false
+  cartesian_max_tuples: null

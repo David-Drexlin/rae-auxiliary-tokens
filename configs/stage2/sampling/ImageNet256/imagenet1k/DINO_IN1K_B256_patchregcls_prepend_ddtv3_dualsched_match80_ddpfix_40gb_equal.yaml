@@ -1,0 +1,36 @@
+stage2:
+  config: "RAE_ROOT_PLACEHOLDER/configs/stage2/training/ImageNet256/imagenet1k/DiTDH-S_DINO_IN1K_B256_PatchRegCls_prepend_v3_dualsched_80ep_match80_40gb.yaml"
+  ckpt: "RAE_ROOT_PLACEHOLDER/ckpts/stage2_imagenet1k_ddtv3_match80_ddpfix_40gb/in1k_s2_dino_patchregcls_ddtv3_dualsched_match80_ddpfix_40gb/checkpoints/ep-last.pt"
+  use_ema: true
+
+decode:
+  use_aux_for_decode: true
+
+output:
+  sample_dir: "RAE_ROOT_PLACEHOLDER/samples_stage2_imagenet1k_ddtv3_match80_ddpfix_40gb"
+  save_folder: "in1k_s2_dino_patchregcls_ddtv3_dualsched_match80_ddpfix_40gb_equal_cfg1"
+  pack_npz: false
+  save_latent_shards: true
+  latent_shard_dir: "latent_shards"
+
+run:
+  num_samples: 50000
+  per_proc_batch_size: 64
+  precision: "bf16"
+  tf32: true
+  global_seed: 42
+
+conditioning:
+  mode: "equal_class"
+  csv_path: null
+  image_root: null
+  count_level: "image"
+  id_field: "label"
+  label_field: "label"
+  slide_sep: "__"
+  y_vocab_json: null
+  meta_vocabs_json: null
+  skip_unk_y: false
+  drop_meta_unk: false
+  skip_unk_meta: false
+  cartesian_max_tuples: null

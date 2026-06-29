@@ -1,0 +1,73 @@
+from torch import nn
+import torch
+from . import register_encoder
+from transformers import ViTMAEForPreTraining
+
+
+@register_encoder()
+class MAEwNorm(nn.Module):
+    def __init__(self, model_name: str):
+        super().__init__()
+        self.model_name = model_name
+        self.model = ViTMAEForPreTraining.from_pretrained(self.model_name).vit
+
+        # remove the affine of final layernorm
+        self.model.layernorm.elementwise_affine = False
+        self.model.layernorm.weight = None
+        self.model.layernorm.bias = None
+
+        self.hidden_size = self.model.config.hidden_size
+        self.patch_size = self.model.config.patch_size
+        self.model.config.mask_ratio = 0.0  # no masking
+
+        # Expose prefix/register metadata so RAE can infer aux-token counts
+        self.num_prefix_tokens = 1
+        self.num_register_tokens = 0
+
+    def _forward_all_tokens(self, images: torch.Tensor) -> torch.Tensor:
+        """
+        Returns full MAE token sequence including CLS:
+            [B, 1 + N, C]
+        """
+        h, w = images.shape[2], images.shape[3]
+        patch_num = int(h * w // self.patch_size ** 2)
+        assert patch_num * self.patch_size ** 2 == h * w, \
+            "image size should be divisible by patch size"
+
+        noise = (
+            torch.arange(patch_num, device=images.device)
+            .unsqueeze(0)
+            .expand(images.shape[0], -1)
+            .to(images.dtype)
+        )
+
+        outputs = self.model(
+            images,
+            noise=noise,
+            interpolate_pos_encoding=True,
+        )
+        return outputs.last_hidden_state
+
+    @torch.no_grad()
+    def forward(self, images: torch.Tensor) -> torch.Tensor:
+        """
+        Patch-only path for baseline RAE compatibility.
+        Returns:
+            patch_tokens: [B, N, C]
+        """
+        all_tokens = self._forward_all_tokens(images)
+        patch_tokens = all_tokens[:, 1:]  # drop CLS
+        return patch_tokens
+
+    @torch.no_grad()
+    def forward_with_global(self, images: torch.Tensor):
+        """
+        Aux-token path for RAE global/aux conditioning.
+        Returns:
+            patch_tokens:  [B, N, C]
+            global_tokens: [B, 1, C]   (CLS only for MAE)
+        """
+        all_tokens = self._forward_all_tokens(images)
+        global_tokens = all_tokens[:, :1]   # CLS
+        patch_tokens = all_tokens[:, 1:]    # patches
+        return patch_tokens, global_tokens
