@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+title: "When do Representation Autoencoders Need Auxiliary Tokens?"
+message: "If you use this code, please cite the paper."
+authors:
+  - family-names: Drexlin
+    given-names: David
+  - family-names: Hense
+    given-names: Julius
+  - family-names: Dippel
+    given-names: Jonas
+repository-code: "https://github.com/David-Drexlin/rae-auxiliary-tokens"
+license: MIT
