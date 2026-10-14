@@ -1,54 +1,59 @@
-# Code Supplement: When do Representation Autoencoders Need Auxiliary Tokens?
+# Decoding Register Tokens Preserves Global Scene Details
 
-This folder is a minimal code supplement for the paper experiments. It is derived from the MIT-licensed RAE codebase and contains the paper-specific code needed for:
+David Jacob Drexlin, Julius Hense, and Jonas Dippel  
+[Paper: arXiv:2610.13299](https://arxiv.org/abs/2610.13299)
 
-- Stage-1 RAE decoder training and reconstruction evaluation.
-- Auxiliary-token decoder interfaces: prepending, cross-attention, AdaLN-style modulation, global-only controls, learned-token controls, PatchMAP controls, and recovered DINO auxiliary tokens.
-- DINOv2, DINOv2 without registers, DINOv3, MAE, and SigLIP2 ImageNet decoder configs.
-- Post-hoc DINOv2 CLS-plus-register prediction from patch tokens.
-- Patch-only Stage-2 DiT/DDT training, sampling, AutoGuidance evaluation, and recovered-auxiliary decoding.
-- Probe and diagnostic scripts used for complementarity, semantic retention, and summary-token controls.
+> **Release status (14 October 2026): source-only, not a complete reproduction release.**
+> The supplied reconstruction-training supplement is in [`paper/`](paper/).
+> The root-level `src/`, `configs/`, and shell launchers are an **older research snapshot**; their defaults must not be treated as the current paper's reproduction recipe.
+> Trained checkpoints, experiment-specific training JSONs, manifests, normalization statistics, and a current four-register MHAP/generation package are **not included**. Training and paper metrics have not been reproduced as part of this repository update.
 
-## What is intentionally not included
+## Start here
 
-The supplement excludes large or non-redistributable artifacts:
+- **Current supplied reconstruction supplement:** [`paper/README.md`](paper/README.md).
+- **Register-aware decoder:** [`paper/code/model_src/stage1/decoders/decoder.py`](paper/code/model_src/stage1/decoders/decoder.py).
+- **Encoder features and token selection:** [`paper/code/model_src/stage1/encoders/dinov2.py`](paper/code/model_src/stage1/encoders/dinov2.py) and [`paper/code/model_src/stage1/rae.py`](paper/code/model_src/stage1/rae.py).
+- **Training entry point and input schema:** [`paper/code/train.py`](paper/code/train.py) and [`paper/code/trainer/protocol.py`](paper/code/trainer/protocol.py).
+- **Import provenance and validation scope:** [`paper/RELEASE_STATUS.md`](paper/RELEASE_STATUS.md).
+- **Historical code documentation:** [`docs/LEGACY_README.md`](docs/LEGACY_README.md).
 
-- ImageNet / ImageNet-R / NINCO / Places365 data.
-- Model checkpoints, generated samples, logs, caches, NPZ/NPY feature stores, and paper figures.
-- The Apptainer/Singularity container image.
-- Third-party evaluation repos such as guided-diffusion and FD-DINOv2.
-- Downloaded pretrained weights for DINOv2, DINOv3, MAE, SigLIP2, VGG, LPIPS, or discriminator backbones.
+The `paper/` package keeps all spatial patches and optionally prepends four native register outputs for joint self-attention. The encoder CLS output is not a decoder input in this configuration; the decoder's own learned class token is a separate parameter. See the paper and package source for the feature-coordinate and positional-embedding conventions.
 
-Configs and Slurm scripts may contain placeholder paths such as `RAE_ROOT_PLACEHOLDER`, `DATASETS_ROOT_PLACEHOLDER`, and `HOME_PLACEHOLDER`. Replace these with local paths before running.
+## Running the supplied package
 
-## Layout
+Start in `paper/`, not the repository root:
 
-- `src/`: Python source for Stage-1, Stage-2, evaluation, auxiliary prediction, and diagnostics.
-- `configs/decoder/`: ViT decoder architecture configs.
-- `configs/register_prediction/`: MHAP patch-to-auxiliary predictor configs.
-- `configs/stage1/training/ImageNet/`: ImageNet100 Stage-1 configs and controls.
-- `configs/stage1/training/ImageNet1k/`: ImageNet1K Stage-1 scale-up configs.
-- `configs/stage2/training/ImageNet256/`: selected ImageNet Stage-2 training configs.
-- `configs/stage2/sampling/ImageNet256/`: selected ImageNet Stage-2 sampling/evaluation configs.
-- `*.sh`: selected launch/evaluation wrappers for the reported experiment families.
-- `requirements.txt`, `environment.yml`: dependency snapshots.
-- `LICENSE`, `NOTICE.md`: licensing and redistribution notes.
+```bash
+cd paper
+bash scripts/check_inputs.sh /path/to/training.json
+bash scripts/train_decoder.sh /path/to/training.json /path/to/patch_output
+bash scripts/train_decoder_with_registers.sh /path/to/training.json /path/to/register_output
+```
 
-## Paper-to-Code Map
+These commands require external inputs. There is no bundled training JSON: the package validates schema `register-decoder-training-v1`, local asset checksums, and image manifests. Read the package README before launching. A successful input check does not establish forward-pass correctness or reproduce a paper result.
 
-- Main Stage-1 decoder training uses `src/train_stage1.py`, `src/stage1/`, the `run_stage1_*_imagenet100_array.sh` launchers, and configs under `configs/stage1/training/ImageNet/`.
-- DINOv2 auxiliary interfaces are implemented in `src/stage1/decoders/decoder.py` and `src/stage1/rae.py`; the corresponding configs include `DINO_decB_Patch+CLS_prepend.yaml`, `DINO_decB_Patch+Register_prepend.yaml`, `DINO_decB_Patch+Register+CLS_prepend.yaml`, `DINO_decB_Patch+Register+CLS_CA.yaml`, and `DINO_decB_Patch+Register+CLS_AdaLN.yaml`.
-- MAE and SigLIP2 contrast rows use the matching `MAE_decB_*` and `SigLIP2_decB_*` configs under `configs/stage1/training/ImageNet/`.
-- Global-only controls use `run_stage1_dino_global_imagenet100_array.sh`, `run_stage1_mae_imagenet100_array.sh`, `run_stage1_siglip2_imagenet100_array.sh`, and the `Global*` / `GlobalOnly*` Stage-1 configs.
-- Probe diagnostics use `run_aux_complementarity_probe.sh`, `run_eval_stage1_semantic_retention.sh`, `run_summarize_stage1_semantic_retention_dino.sh`, `run_global_color_hist_probe.sh`, `run_cls_register_fusion_probe.sh`, `run_patchmap_summary_probe.sh`, and the corresponding `src/analyze_*` scripts.
-- ImageNet1K Stage-1 scale-up uses `run_dino_imagenet1k_stats_array.sh`, `run_stage1_dino_imagenet1k_8gpu_single.sh`, and configs under `configs/stage1/training/ImageNet1k/`.
-- OOD reconstruction evaluation uses `stage1_eval_OOD_DINO_single.sh`, `src/stage1_sample_ddp.py`, and `src/eval_stage1_recon.py`.
-- Post-hoc auxiliary prediction uses `cache_dino_dataset_features.sh`, `run_register_prediction_in100.sh`, `src/register_prediction/`, and configs under `configs/register_prediction/`.
-- Stage-2 patch-only DiT/DDT training uses `train_ImageNet_DiT.sh`, `src/train.py`, `src/stage2/`, and configs under `configs/stage2/training/ImageNet256/`.
-- Stage-2 sampling/evaluation uses `src/sample_ddp.py`, `src/sample_recovered_aux_ddp.py`, `run_stage2_in1k_class_sample.sh`, `stage2_eval_ImageNet1k*.sh`, `submit_stage2_dino_imagenet1k_patch80_recovery_chain_fixv3_40gb.sh`, and `submit_stage2_in1k_ag150_eval_chains.sh`.
+The two training launchers select patch-only or patch-plus-four-register inputs. The supplied trainer fixes the endpoint at 16 epochs. The packaged split validation also expects 50,000 final-evaluation images, so adapting it to another dataset requires an explicitly documented protocol change rather than simply replacing the image folder.
 
-## License Notes
+## Legacy snapshot
 
-The included code is distributed under the MIT license from the upstream RAE repository. Keep `LICENSE` with any copy of this supplement. Paper-specific modifications in this bundle should be treated as MIT-compatible unless the authors choose a different license before public release.
+The existing root-level code is retained at its original paths to avoid silently breaking earlier experiments. It includes broader auxiliary-token ablations and an older five-output CLS-plus-register recovery configuration. Some launchers override YAML settings, and some defaults differ from the principal experiments in the current manuscript. Do not mix these configurations or checkpoints with the `paper/` package without checking compatibility.
 
-Dataset, pretrained-weight, and external-evaluator licenses are separate. Do not redistribute ImageNet or downloaded model weights inside the NeurIPS supplement.
+The pre-update snapshot is commit `4998a6e5109f76ca0e59c4199f1db30c2debe0a7`. Its original README is preserved in `docs/LEGACY_README.md`.
+
+## Citation
+
+```bibtex
+@misc{drexlin2026decoding,
+  title={Decoding Register Tokens Preserves Global Scene Details},
+  author={David Jacob Drexlin and Julius Hense and Jonas Dippel},
+  year={2026},
+  eprint={2610.13299},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV},
+  url={https://arxiv.org/abs/2610.13299}
+}
+```
+
+## Licenses and external assets
+
+Retain `LICENSE`, `NOTICE.md`, and the third-party notices in the supplied source. In particular, the supplement retains third-party licensing text in `paper/code/model_src/__init__.py`. Dataset, pretrained-weight, and external-evaluator terms are separate; those assets are not redistributed here.

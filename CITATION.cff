@@ -1,12 +1,26 @@
 cff-version: 1.2.0
-title: "When do Representation Autoencoders Need Auxiliary Tokens?"
-message: "If you use this code, please cite the paper."
+title: "Decoding Register Tokens Preserves Global Scene Details"
+message: "Please cite the paper below when using this code. See README.md for the current source-only release scope and legacy configuration warnings."
+type: software
 authors:
   - family-names: Drexlin
-    given-names: David
+    given-names: David Jacob
   - family-names: Hense
     given-names: Julius
   - family-names: Dippel
     given-names: Jonas
 repository-code: "https://github.com/David-Drexlin/rae-auxiliary-tokens"
-license: MIT
+url: "https://arxiv.org/abs/2610.13299"
+preferred-citation:
+  type: article
+  title: "Decoding Register Tokens Preserves Global Scene Details"
+  authors:
+    - family-names: Drexlin
+      given-names: David Jacob
+    - family-names: Hense
+      given-names: Julius
+    - family-names: Dippel
+      given-names: Jonas
+  journal: arXiv
+  year: 2026
+  url: "https://arxiv.org/abs/2610.13299"
